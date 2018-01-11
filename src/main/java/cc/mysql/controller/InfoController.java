@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,17 +28,21 @@ public class InfoController {
 
     private Map<String, Object> cache = new HashMap<>();
 
+    @PostConstruct
+    public void caching() {
+        cache.put("categories", categoryRepository.findAll());
+        long customerCnt = customerRepository.count();
+        cache.put("customerCnt", customerCnt);
+        long orderCnt = orderRepository.count();
+        cache.put("orderCnt", orderCnt);
+        long productCnt = productRepository.count();
+        cache.put("productCnt", productCnt);
+    }
+
     @RequestMapping(value = "/info", method = RequestMethod.GET)
     public Object get(@RequestParam(required = false) Boolean useCache) {
         if (useCache != null && !useCache) {
-            long customerCnt = customerRepository.count();
-            long orderCnt = orderRepository.count();
-            long productCnt = productRepository.count();
-
-            cache.put("customerCnt", customerCnt);
-            cache.put("orderCnt", orderCnt);
-            cache.put("productCnt", productCnt);
-            cache.put("categories", categoryRepository.findAll());
+            caching();
         }
         return new Response(200, "OK", cache, false);
     }
